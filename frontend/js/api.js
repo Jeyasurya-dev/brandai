@@ -1,6 +1,11 @@
 // Central API client for the Brand Name Generator frontend.
 // Change API_BASE to point at your running Flask backend.
-const API_BASE = window.BRANDGEN_API_BASE || "http://localhost:5000/api";
+const API_BASE =
+  window.BRANDGEN_API_BASE ||
+  (window.location.hostname === "localhost" ||
+   window.location.hostname === "127.0.0.1"
+    ? "http://localhost:5000/api"
+    : "https://brandai-backend.onrender.com/api");
 
 const Auth = {
   getAccessToken() { return localStorage.getItem("bg_access_token"); },
