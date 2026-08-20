@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>History — Brandmark</title>
+<link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+<nav class="site-nav" id="site-nav"></nav>
+
+<div class="dash-shell">
+  <div class="container">
+    <div class="dash-header">
+      <div><h1>Generation history</h1><p>Every brief you've run, and what it produced.</p></div>
+    </div>
+
+    <div id="history-list">
+      <div class="state-box"><div class="spinner"></div><p>Loading history…</p></div>
+    </div>
+  </div>
+</div>
+
+<footer class="site-footer" id="site-footer"></footer>
+
+<script src="js/api.js"></script>
+<script src="js/nav.js"></script>
+<script>
+  requireAuth();
+  renderNav("history");
+  renderFooter();
+
+  function riskBadgeClass(status) {
+    if (status === "Low Risk") return "low";
+    if (status === "Medium Risk") return "medium";
+    if (status === "High Risk") return "high";
+    if (status === "Search Failed") return "failed";
+    return "review";
+  }
+
+  async function loadDetail(id, container) {
+    container.innerHTML = `<div class="state-box"><div class="spinner"></div></div>`;
+    try {
+      const detail = await Api.historyDetail(id);
+      container.innerHTML = `
+        <div class="results-grid">
+          ${detail.names.map(n => `
+            <div class="specimen">
+              <div class="sp-rank">№ ${String(n.rank).padStart(2, "0")}</div>
+              <div class="sp-name">${n.name}</div>
+              <p class="sp-meaning">${n.meaning || ""}</p>
+              <div class="sp-badges"><span class="badge ${riskBadgeClass(n.trademark_status)}">${n.trademark_status}</span></div>
+            </div>`).join("")}
+        </div>`;
+    } catch (e) {
+      container.innerHTML = `<p style="color:var(--high);">${e.message}</p>`;
+    }
+  }
+
+  (async () => {
+    const listEl = document.getElementById("history-list");
+    try {
+      const { generations } = await Api.history();
+      if (!generations.length) {
+        listEl.innerHTML = `<div class="empty-state"><h3>No generations yet</h3><p>Run your first brief to see it here.</p><a href="generate.html" class="btn btn-primary">Generate names</a></div>`;
+        return;
+      }
+      listEl.innerHTML = generations.map(g => `
+        <div class="card" style="margin-bottom:16px;">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:16px; flex-wrap:wrap;">
+            <div>
+              <div style="font-family:var(--font-display); font-size:1.1rem;">${g.business_description}</div>
+              <div style="color:var(--muted); font-size:0.82rem; margin-top:6px;">
+                ${(g.inspirations || []).join(", ") || "no inspiration set"} · ${(g.style_tags || []).join(", ") || "no style set"}
+              </div>
+            </div>
+            <div style="text-align:right;">
+              <span class="pill-status ${g.status}">
+  ${
+    g.status === "pending"
+      ? "Generating..."
+      : g.status === "completed"
+        ? "Completed"
+        : g.status === "failed"
+          ? "Failed"
+          : g.status
+  }
+</span>
+              <div style="color:var(--muted-2); font-size:0.78rem; margin-top:6px; font-family:var(--font-mono);">${new Date(g.created_at).toLocaleString()}</div>
+            </div>
+          </div>
+          <button class="btn btn-ghost btn-sm mt-24 toggle-btn" data-id="${g.id}">View ${g.returned_count} names</button>
+          <div class="mt-24 detail-container" id="detail-${g.id}" style="display:none;"></div>
+        </div>
+      `).join("");
+
+      listEl.querySelectorAll(".toggle-btn").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          const container = document.getElementById(`detail-${btn.dataset.id}`);
+          const isOpen = container.style.display !== "none";
+          container.style.display = isOpen ? "none" : "block";
+          btn.textContent = isOpen ? `View names` : "Hide names";
+          if (!isOpen && !container.dataset.loaded) {
+            container.dataset.loaded = "1";
+            await loadDetail(btn.dataset.id, container);
+          }
+        });
+      });
+    } catch (e) {
+      listEl.innerHTML = `<p style="color:var(--high);">${e.message}</p>`;
+    }
+  })();
+</script>
+</body>
+</html>

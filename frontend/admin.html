@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — Brandmark</title>
+<link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+
+<nav class="site-nav" id="site-nav"></nav>
+
+<div class="dash-shell">
+  <div class="container">
+
+    <!-- ==============================
+         ADMIN HEADER
+         ============================== -->
+
+    <div class="dash-header">
+      <div>
+        <h1>Admin</h1>
+        <p>Unlimited access, enforced server-side.</p>
+      </div>
+    </div>
+
+
+    <!-- ==============================
+         ANALYTICS
+         ============================== -->
+
+    <div class="stat-grid" id="analytics-grid">
+
+      <div class="stat-card">
+        <div class="stat-num">—</div>
+        <div class="stat-label">Users</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-num">—</div>
+        <div class="stat-label">Generations</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-num">—</div>
+        <div class="stat-label">Names generated</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-num">—</div>
+        <div class="stat-label">Active subscriptions</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-num">—</div>
+        <div class="stat-label">Trademark searches</div>
+      </div>
+
+    </div>
+
+
+    <!-- ==============================
+         TABS
+         ============================== -->
+
+    <div class="tabs">
+
+      <button class="tab-btn active" data-tab="users">
+        Users
+      </button>
+
+      <button class="tab-btn" data-tab="subscriptions">
+        Subscriptions
+      </button>
+
+      <button class="tab-btn" data-tab="trademark">
+        Trademark logs
+      </button>
+
+      <button class="tab-btn" data-tab="usage">
+        Feature usage
+      </button>
+
+      <button class="tab-btn" data-tab="settings">
+        AI &amp; system settings
+      </button>
+
+    </div>
+
+
+    <!-- ==============================
+         USERS
+         ============================== -->
+
+    <div class="tab-panel active" id="tab-users">
+
+      <div class="table-wrap">
+
+        <table class="data-table">
+
+          <thead>
+            <tr>
+              <th>Email</th>
+              <th>Name</th>
+              <th>Role</th>
+              <th>Status</th>
+              <th>Joined</th>
+              <th></th>
+            </tr>
+          </thead>
+
+          <tbody id="users-tbody">
+            <tr>
+              <td colspan="6" style="color:var(--muted);">
+                Loading…
+              </td>
+            </tr>
+          </tbody>
+
+        </table>
+
+      </div>
+
+    </div>
+
+
+    <!-- ==============================
+         SUBSCRIPTIONS
+         ============================== -->
+
+    <div class="tab-panel" id="tab-subscriptions">
+
+
+      <!-- PLAN MANAGEMENT -->
+
+      <div class="card" style="margin-bottom:16px;">
+
+        <div style="
+          display:flex;
+          align-items:center;
+          justify-content:space-between;
+          gap:16px;
+          margin-bottom:20px;
+          flex-wrap:wrap;
+        ">
+
+          <div>
+
+            <h3 style="
+              font-family:var(--font-display);
+              margin:0 0 6px;
+            ">
+              Subscription Plans
+            </h3>
+
+            <p style="
+              color:var(--muted);
+              font-size:0.86rem;
+              margin:0;
+            ">
+              Create and manage pricing, limits, and feature access.
+            </p>
+
+          </div>
+
+          <button
+            type="button"
+            class="btn btn-primary"
+            id="create-plan-btn"
+          >
+            + Create Plan
+          </button>
+
+        </div>
+
+
+        <div id="plan-msg" class="form-msg"></div>
+
+
+        <!-- PLAN FORM -->
+
+        <div
+          id="plan-form"
+          style="display:none; margin-bottom:24px;"
+        >
+
+          <div class="two-col">
+
+
+            <div class="field">
+
+              <label for="plan-code">
+                Plan Code
+              </label>
+
+              <input
+                id="plan-code"
+                type="text"
+                placeholder="pro"
+                autocomplete="off"
+              >
+
+              <small style="color:var(--muted);">
+                Example: free, pro, business
+              </small>
+
+            </div>
+
+
+            <div class="field">
+
+              <label for="plan-name">
+                Plan Name
+              </label>
+
+              <input
+                id="plan-name"
+                type="text"
+                placeholder="Pro"
+                autocomplete="off"
+              >
+
+            </div>
+
+
+            <div class="field">
+
+              <label for="plan-price">
+                Price
+              </label>
+
+              <input
+                id="plan-price"
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="499"
+              >
+
+            </div>
+
+
+            <div class="field">
+
+              <label for="plan-currency">
+                Currency
+              </label>
+
+              <select id="plan-currency">
+
+                <option value="INR">
+                  INR (₹)
+                </option>
+
+                <option value="USD">
+                  USD ($)
+                </option>
+
+              </select>
+
+            </div>
+
+
+            <div class="field">
+
+              <label for="plan-billing-period">
+                Billing Period
+              </label>
+
+              <select id="plan-billing-period">
+
+                <option value="monthly">
+                  Monthly
+                </option>
+
+                <option value="yearly">
+                  Yearly
+                </option>
+
+              </select>
+
+            </div>
+
+
+            <div class="field">
+
+              <label for="plan-names-per-generation">
+                Names per Generation
+              </label>
+
+              <input
+                id="plan-names-per-generation"
+                type="number"
+                min="1"
+                placeholder="25"
+              >
+
+            </div>
+
+
+            <div class="field">
+
+              <label for="plan-monthly-limit">
+                Monthly Generation Limit
+              </label>
+
+              <input
+                id="plan-monthly-limit"
+                type="number"
+                min="0"
+                placeholder="100"
+              >
+
+              <small style="color:var(--muted);">
+                Leave empty for unlimited.
+              </small>
+
+            </div>
+
+
+            <div class="field">
+
+              <label for="plan-active">
+                Plan Status
+              </label>
+
+              <select id="plan-active">
+
+                <option value="true">
+                  Active
+                </option>
+
+                <option value="false">
+                  Inactive
+                </option>
+
+              </select>
+
+            </div>
+
+          </div>
+
+
+          <div style="
+            display:flex;
+            gap:10px;
+            margin-top:20px;
+          ">
+
+            <button
+              type="button"
+              class="btn btn-primary"
+              id="save-plan-btn"
+            >
+              Save Plan
+            </button>
+
+            <button
+              type="button"
+              class="btn btn-ghost"
+              id="cancel-plan-btn"
+            >
+              Cancel
+            </button>
+
+          </div>
+
+        </div>
+
+
+        <!-- PLANS TABLE -->
+
+        <div class="table-wrap">
+
+          <table class="data-table">
+
+            <thead>
+
+              <tr>
+                <th>Plan</th>
+                <th>Price</th>
+                <th>Names / Generation</th>
+                <th>Monthly Limit</th>
+                <th>Status</th>
+                <th></th>
+              </tr>
+
+            </thead>
+
+            <tbody id="plans-tbody">
+
+              <tr>
+
+                <td
+                  colspan="6"
+                  style="color:var(--muted);"
+                >
+                  Loading plans…
+
+                </td>
+
+              </tr>
+
+            </tbody>
+
+          </table>
+
+        </div>
+
+      </div>
+
+
+      <!-- MANUAL SUBSCRIPTION ASSIGNMENT -->
+
+      <div class="card" style="margin-bottom:16px;">
+
+        <h3 style="
+          font-family:var(--font-display);
+          margin-top:0;
+        ">
+          Assign Subscription
+        </h3>
+
+        <p style="
+          color:var(--muted);
+          font-size:0.86rem;
+          margin-bottom:20px;
+        ">
+          Manually assign an active subscription plan to a user.
+        </p>
+
+
+        <div
+          id="subscription-msg"
+          class="form-msg"
+        ></div>
+
+
+        <div class="two-col">
+
+
+          <div class="field">
+
+            <label for="subscription-user">
+              User
+            </label>
+
+            <select id="subscription-user">
+
+              <option value="">
+                Select a user
+              </option>
+
+            </select>
+
+          </div>
+
+
+          <div class="field">
+
+            <label for="subscription-plan">
+              Plan
+            </label>
+
+            <select id="subscription-plan">
+
+              <option value="">
+                Select a plan
+              </option>
+
+            </select>
+
+          </div>
+
+
+        </div>
+
+
+        <button
+          type="button"
+          class="btn btn-primary"
+          id="assign-subscription-btn"
+        >
+          Assign Subscription
+        </button>
+
+      </div>
+
+
+      <!-- ACTIVE / PAST SUBSCRIPTIONS -->
+
+      <div class="card">
+
+        <h3 style="
+          font-family:var(--font-display);
+          margin-top:0;
+        ">
+          Active &amp; Past Subscriptions
+        </h3>
+
+
+        <div class="table-wrap">
+
+          <table class="data-table">
+
+            <thead>
+
+              <tr>
+                <th>User</th>
+                <th>Plan</th>
+                <th>Status</th>
+                <th>Provider</th>
+                <th>Subscribed On</th>
+                <th>Action</th>
+              </tr>
+
+            </thead>
+
+
+            <tbody id="subs-tbody">
+
+              <tr>
+
+                <td
+                  colspan="6"
+                  style="color:var(--muted);"
+                >
+                  Loading…
+
+                </td>
+
+              </tr>
+
+            </tbody>
+
+          </table>
+
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <!-- ==============================
+         TRADEMARK LOGS
+         ============================== -->
+
+    <div class="tab-panel" id="tab-trademark">
+
+      <div class="table-wrap">
+
+        <table class="data-table">
+
+          <thead>
+
+            <tr>
+              <th>Name searched</th>
+              <th>Provider</th>
+              <th>Status</th>
+              <th>When</th>
+            </tr>
+
+          </thead>
+
+          <tbody id="tm-tbody">
+
+            <tr>
+
+              <td
+                colspan="4"
+                style="color:var(--muted);"
+              >
+                Loading…
+
+              </td>
+
+            </tr>
+
+          </tbody>
+
+        </table>
+
+      </div>
+
+    </div>
+
+
+    <!-- ==============================
+         FEATURE USAGE
+         ============================== -->
+
+    <div class="tab-panel" id="tab-usage">
+
+      <div class="table-wrap">
+
+        <table class="data-table">
+
+          <thead>
+
+            <tr>
+              <th>Feature</th>
+              <th>This month</th>
+              <th>All time</th>
+            </tr>
+
+          </thead>
+
+          <tbody id="usage-tbody">
+
+            <tr>
+
+              <td
+                colspan="3"
+                style="color:var(--muted);"
+              >
+                Loading…
+
+              </td>
+
+            </tr>
+
+          </tbody>
+
+        </table>
+
+      </div>
+
+
+      <p style="
+        color:var(--muted);
+        font-size:0.82rem;
+        margin-top:16px;
+      ">
+
+        Monthly limits per plan live in each
+        plan's <code>features</code> JSON
+        (e.g. <code>logo_generations_per_month</code>)
+        — edit via
+        <code>PATCH /api/admin/plans/&lt;id&gt;</code>.
+
+        A missing or <code>null</code> value means unlimited.
+
+        Admin accounts always bypass these limits.
+
+      </p>
+
+    </div>
+
+
+    <!-- ==============================
+         SETTINGS
+         ============================== -->
+
+    <div class="tab-panel" id="tab-settings">
+
+      <div class="card">
+
+        <h3 style="
+          font-family:var(--font-display);
+          margin-top:0;
+        ">
+          Provider configuration
+        </h3>
+
+        <p style="
+          color:var(--muted);
+          font-size:0.88rem;
+        ">
+
+          These reflect environment variables on the backend
+          (AI, trademark, domain, payment providers).
+
+          Update them in the server's
+          <code>.env</code> file and restart the backend —
+          this panel is a read-only status view plus a key/value
+          store for additional settings.
+
+        </p>
+
+        <div
+          id="settings-status"
+          class="two-col mt-24"
+        ></div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+
+<footer
+  class="site-footer"
+  id="site-footer"
+></footer>
+
+
+<script src="js/api.js"></script>
+<script src="js/nav.js"></script>
+<script src="js/admin.js"></script>
+
+</body>

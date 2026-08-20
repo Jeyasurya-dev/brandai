@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pricing — Brandmark</title>
+<link rel="stylesheet" href="css/main.css">
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+</head>
+<body>
+<nav class="site-nav" id="site-nav"></nav>
+
+<section style="padding-top:64px;">
+  <div class="container">
+    <div class="section-head text-center" style="margin:0 auto 48px;">
+      <h2>Simple, usage-based plans</h2>
+      <p>Prices are set by the team and can change — always shown live from the server, never hard-coded.</p>
+    </div>
+    <div class="pricing-grid" id="pricing-grid">
+      <div class="state-box" style="grid-column:1/-1;"><div class="spinner"></div></div>
+    </div>
+  </div>
+</section>
+
+<footer class="site-footer" id="site-footer"></footer>
+
+<script src="js/api.js"></script>
+<script src="js/nav.js"></script>
+<script>
+  renderNav("pricing");
+  renderFooter();
+
+  function formatPrice(cents, currency) {
+    if (cents === null || cents === undefined) {
+      return "Contact us";
+    }
+
+    if (cents === 0) {
+      return "₹0";
+    }
+
+    return new Intl.NumberFormat("en-IN", {
+      style: "currency",
+      currency: currency || "INR"
+    }).format(cents / 100);
+  }
+
+  async function startRazorpayCheckout(planId, button) {
+
+    const originalText = button.textContent;
+
+    button.disabled = true;
+    button.textContent = "Creating order…";
+
+    try {
+
+      const checkout =
+        await Api.createCheckout(planId);
+
+      const options = {
+
+        key: checkout.key_id,
+
+        amount: checkout.amount,
+
+        currency: checkout.currency,
+
+        name: "Brandmark",
+
+        description:
+          checkout.description || "Subscription",
+
+        order_id: checkout.order_id,
+
+        prefill: {
+          name:
+            checkout.prefill?.name || "",
+
+          email:
+            checkout.prefill?.email || ""
+        },
+
+        notes:
+          checkout.notes || {},
+
+        theme: {
+          color: "#111111"
+        },
+
+        handler: async function (response) {
+
+          try {
+
+            button.textContent =
+              "Verifying payment…";
+
+            const result =
+              await Api.verifyPayment({
+
+                razorpay_order_id:
+                  response.razorpay_order_id,
+
+                razorpay_payment_id:
+                  response.razorpay_payment_id,
+
+                razorpay_signature:
+                  response.razorpay_signature,
+
+                plan_id: planId
+
+              });
+
+            alert(
+              result.message ||
+              "Payment successful! Your subscription is now active."
+            );
+
+            window.location.href =
+              "profile.html?payment=success";
+
+          } catch (e) {
+
+            console.error(
+              "Payment verification failed:",
+              e
+            );
+
+            alert(
+              e.message ||
+              "Payment verification failed."
+            );
+
+            button.disabled = false;
+            button.textContent = originalText;
+          }
+        },
+
+        modal: {
+          ondismiss: function () {
+
+            button.disabled = false;
+            button.textContent = originalText;
+
+          }
+        }
+      };
+
+      const razorpay =
+        new Razorpay(options);
+
+      razorpay.on(
+        "payment.failed",
+        function (response) {
+
+          console.error(
+            "Razorpay payment failed:",
+            response.error
+          );
+
+          alert(
+            response.error?.description ||
+            "Payment failed. Please try again."
+          );
+
+          button.disabled = false;
+          button.textContent = originalText;
+        }
+      );
+
+      razorpay.open();
+
+    } catch (e) {
+
+      console.error(
+        "Razorpay checkout error:",
+        e
+      );
+
+      alert(
+        e.message ||
+        "Unable to start payment."
+      );
+
+      button.disabled = false;
+      button.textContent = originalText;
+    }
+  }
+
+
+  (async () => {
+
+    const grid =
+      document.getElementById(
+        "pricing-grid"
+      );
+
+    try {
+
+      const { plans } =
+        await Api.plans();
+
+      grid.innerHTML =
+        plans.map(p => {
+
+          const isFree =
+            !p.price_cents;
+
+          const ctaId =
+            `cta-${p.id}`;
+
+          let ctaHtml;
+
+          if (!Auth.isLoggedIn()) {
+
+            ctaHtml = `
+              <a
+                href="register.html"
+                class="btn ${
+                  p.code === "pro"
+                    ? "btn-primary"
+                    : "btn-ghost"
+                } btn-block"
+              >
+                ${
+                  isFree
+                    ? "Start free"
+                    : "Sign up to subscribe"
+                }
+              </a>
+            `;
+
+          } else if (isFree) {
+
+            ctaHtml = `
+              <a
+                href="generate.html"
+                class="btn btn-ghost btn-block"
+              >
+                Start generating
+              </a>
+            `;
+
+          } else {
+
+            ctaHtml = `
+              <button
+                type="button"
+                class="btn btn-primary btn-block"
+                id="${ctaId}"
+                data-plan="${p.id}"
+              >
+                Upgrade to ${p.name}
+              </button>
+            `;
+          }
+
+          return `
+            <div class="price-card ${
+              p.code === "pro"
+                ? "featured"
+                : ""
+            }">
+
+              <div class="plan-name">
+                ${p.name}
+              </div>
+
+              <div class="plan-price">
+                ${formatPrice(
+                  p.price_cents,
+                  p.currency
+                )}
+                <span>
+                  /${p.billing_period}
+                </span>
+              </div>
+
+              <ul>
+
+                <li>
+                  ${p.names_per_generation}
+                  names per generation
+                </li>
+
+                <li>
+                  ${
+                    p.monthly_generation_limit
+                      ? p.monthly_generation_limit +
+                        " generations / month"
+                      : "Unlimited generations"
+                  }
+                </li>
+
+                <li>
+                  ${
+                    p.features?.trademark_screening
+                      ? "Trademark screening included"
+                      : "No trademark screening"
+                  }
+                </li>
+
+                <li>
+                  ${
+                    p.features?.domain_screening
+                      ? "Domain availability across 5 TLDs"
+                      : "No domain screening"
+                  }
+                </li>
+
+              </ul>
+
+              ${ctaHtml}
+
+            </div>
+          `;
+
+        }).join("");
+
+
+      grid
+        .querySelectorAll("[data-plan]")
+        .forEach(btn => {
+
+          btn.addEventListener(
+            "click",
+            async () => {
+
+              await startRazorpayCheckout(
+                btn.dataset.plan,
+                btn
+              );
+
+            }
+          );
+
+        });
+
+
+    } catch (e) {
+
+      console.error(e);
+
+      grid.innerHTML = `
+        <p style="color:var(--high);">
+          ${e.message}
+        </p>
+      `;
+    }
+
+  })();
+</script>
+</body>
+</html>

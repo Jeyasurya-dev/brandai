@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Create your account — Brandmark</title>
+<link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+<nav class="site-nav" id="site-nav"></nav>
+
+<div class="auth-shell">
+  <div class="card auth-card">
+    <h1 style="font-size:1.6rem; margin:0 0 8px;">Create your account</h1>
+    <p style="color:var(--muted); margin:0 0 28px; font-size:0.9rem;">Start with 25 free names per generation.</p>
+
+    <div class="form-msg" id="form-msg"></div>
+
+    <form id="register-form" novalidate>
+      <div class="field">
+        <label for="full_name">Full name</label>
+        <input type="text" id="full_name" autocomplete="name" required>
+        <div class="field-error" id="err-full_name"></div>
+      </div>
+      <div class="field">
+        <label for="email">Email</label>
+        <input type="email" id="email" autocomplete="email" required>
+        <div class="field-error" id="err-email"></div>
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input type="password" id="password" autocomplete="new-password" required>
+        <div class="field-error" id="err-password"></div>
+      </div>
+      <button type="submit" class="btn btn-primary btn-block" id="submit-btn">Create account</button>
+    </form>
+    <div class="form-foot">Already have an account? <a href="login.html" style="color:var(--brass);">Sign in</a></div>
+  </div>
+</div>
+
+<footer class="site-footer" id="site-footer"></footer>
+
+<script src="js/api.js"></script>
+<script src="js/nav.js"></script>
+<script>
+  renderNav();
+  renderFooter();
+
+  const form = document.getElementById("register-form");
+  const msg = document.getElementById("form-msg");
+  const submitBtn = document.getElementById("submit-btn");
+
+  function clearErrors() {
+    document.querySelectorAll(".field-error").forEach(el => { el.classList.remove("show"); el.textContent = ""; });
+    msg.classList.remove("show", "error", "success");
+  }
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    clearErrors();
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Creating account…";
+
+    try {
+      const data = await Api.register({
+        full_name: document.getElementById("full_name").value.trim(),
+        email: document.getElementById("email").value.trim(),
+        password: document.getElementById("password").value,
+      });
+      Auth.setSession(data);
+      window.location.href = "dashboard.html";
+    } catch (err) {
+      if (err.data && err.data.errors) {
+        Object.entries(err.data.errors).forEach(([field, text]) => {
+          const el = document.getElementById(`err-${field}`);
+          if (el) { el.textContent = text; el.classList.add("show"); }
+        });
+      } else {
+        msg.textContent = err.message;
+        msg.classList.add("show", "error");
+      }
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Create account";
+    }
+  });
+</script>
+</body>
+</html>

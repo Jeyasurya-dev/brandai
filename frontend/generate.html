@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Generate names — Brandmark</title>
+<link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+<nav class="site-nav" id="site-nav"></nav>
+
+<div class="generator-shell">
+  <div class="container generator-grid">
+
+    <div class="generator-form-card">
+      <div class="card">
+      <h2 style="font-size:1.3rem; margin:0 0 6px;">Describe the brand</h2>
+      <p style="color:var(--muted); font-size:0.86rem; margin:0 0 24px;">The more specific the inspiration, the more distinctive the names.</p>
+
+      <div class="brief-builder" id="brief-builder">
+        <button type="button" class="btn-link" id="brief-toggle">✨ Use AI Brief Builder instead</button>
+        <div class="brief-panel" id="brief-panel">
+          <p class="brief-hint">Describe your idea in a sentence or two — this builds a structured brief you can review and edit before it fills in the form below.</p>
+          <textarea id="brief-input" rows="2" placeholder="e.g. I want to start a premium dairy company in Tamil Nadu."></textarea>
+          <button type="button" class="btn btn-ghost btn-sm mt-24" id="brief-build-btn">Build brief</button>
+          <div class="form-msg" id="brief-msg"></div>
+          <div class="brief-review" id="brief-review"></div>
+        </div>
+      </div>
+
+      <div class="form-msg" id="form-msg"></div>
+
+      <form id="generate-form">
+        <div class="field">
+          <label for="business_description">Business description</label>
+          <textarea id="business_description" rows="3" placeholder="e.g. An AI technology company building autonomous agents for enterprises" required></textarea>
+        </div>
+        <div class="field">
+          <label for="industry">Industry (optional)</label>
+          <input type="text" id="industry" placeholder="e.g. AI / SaaS">
+        </div>
+        <div class="field">
+          <label for="inspiration-text">Inspiration(s)</label>
+          <div class="chip-input" id="chip-input">
+            <input type="text" id="inspiration-text" placeholder="Type and press Enter — e.g. Krishna, Murugan, nature, initials AK">
+          </div>
+        </div>
+        <div class="field">
+          <label>Style</label>
+          <div class="style-options" id="style-options">
+            <button type="button" class="style-pill" data-style="Premium">Premium</button>
+            <button type="button" class="style-pill" data-style="Futuristic">Futuristic</button>
+            <button type="button" class="style-pill" data-style="Playful">Playful</button>
+            <button type="button" class="style-pill" data-style="Minimal">Minimal</button>
+            <button type="button" class="style-pill" data-style="Bold">Bold</button>
+            <button type="button" class="style-pill" data-style="Trustworthy">Trustworthy</button>
+            <button type="button" class="style-pill" data-style="Spiritual">Spiritual</button>
+            <button type="button" class="style-pill" data-style="Luxury">Luxury</button>
+          </div>
+        </div>
+
+        <div class="advanced-section">
+          <button type="button" class="advanced-toggle-btn" id="advanced-toggle">
+            <span>Advanced naming controls</span>
+            <span class="advanced-caret">▾</span>
+          </button>
+          <div class="advanced-panel" id="advanced-panel">
+            <div class="field">
+              <label for="adv-naming-for">What are you naming?</label>
+              <input type="text" id="adv-naming-for" placeholder="e.g. company, product line, app">
+            </div>
+            <div class="field">
+              <label for="adv-target-audience">Target audience</label>
+              <input type="text" id="adv-target-audience" placeholder="e.g. urban families, Gen Z gamers">
+            </div>
+            <div class="field">
+              <label for="adv-target-market">Target market</label>
+              <input type="text" id="adv-target-market" placeholder="e.g. Tamil Nadu, pan-India, global">
+            </div>
+            <div class="field">
+              <label for="adv-naming-language">Naming language / linguistic direction</label>
+              <input type="text" id="adv-naming-language" placeholder="e.g. Tamil / Sanskrit inspired, English">
+            </div>
+            <div class="field-row">
+              <div class="field">
+                <label for="adv-name-length">Name length</label>
+                <select id="adv-name-length">
+                  <option value="">No preference</option>
+                  <option>Short</option>
+                  <option>Medium</option>
+                  <option>Long</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="adv-name-structure">Name structure</label>
+                <select id="adv-name-structure">
+                  <option value="">No preference</option>
+                  <option>Single invented word</option>
+                  <option>Compound word</option>
+                  <option>Two-word phrase</option>
+                  <option>Real word, new meaning</option>
+                </select>
+              </div>
+            </div>
+            <div class="field">
+              <label for="adv-desired-meaning">Desired meaning / associations</label>
+              <textarea id="adv-desired-meaning" rows="2" placeholder="e.g. purity, abundance, trust"></textarea>
+            </div>
+            <div class="field">
+              <label for="adv-brand-personality-text">Brand personality</label>
+              <div class="chip-input" id="adv-brand-personality-chips">
+                <input type="text" id="adv-brand-personality-text" placeholder="Type and press Enter — e.g. warm, premium, playful">
+              </div>
+            </div>
+            <div class="field">
+              <label for="adv-competitors-text">Competitor / reference brands</label>
+              <div class="chip-input" id="adv-competitors-chips">
+                <input type="text" id="adv-competitors-text" placeholder="Type and press Enter">
+              </div>
+            </div>
+            <div class="field">
+              <label for="adv-names-liked-text">Names you like</label>
+              <div class="chip-input" id="adv-names-liked-chips">
+                <input type="text" id="adv-names-liked-text" placeholder="Type and press Enter">
+              </div>
+            </div>
+            <div class="field">
+              <label for="adv-names-disliked-text">Names you dislike</label>
+              <div class="chip-input" id="adv-names-disliked-chips">
+                <input type="text" id="adv-names-disliked-text" placeholder="Type and press Enter">
+              </div>
+            </div>
+            <div class="field">
+              <label for="adv-words-include-text">Words to include</label>
+              <div class="chip-input" id="adv-words-include-chips">
+                <input type="text" id="adv-words-include-text" placeholder="Type and press Enter">
+              </div>
+            </div>
+            <div class="field">
+              <label for="adv-words-avoid-text">Words to avoid</label>
+              <div class="chip-input" id="adv-words-avoid-chips">
+                <input type="text" id="adv-words-avoid-text" placeholder="Type and press Enter">
+              </div>
+            </div>
+            <div class="field">
+              <label for="adv-brand-story">Brand story / emotional direction</label>
+              <textarea id="adv-brand-story" rows="2" placeholder="What's the founding story or emotional hook?"></textarea>
+            </div>
+            <div class="field">
+              <label for="adv-future-expansion">Future expansion</label>
+              <input type="text" id="adv-future-expansion" placeholder="e.g. plans to expand into snacks and beverages">
+            </div>
+            <div class="field">
+              <label for="adv-five-year-vision">Five-year vision</label>
+              <textarea id="adv-five-year-vision" rows="2" placeholder="Where should this brand be in 5 years?"></textarea>
+            </div>
+            <div class="field">
+              <label for="adv-domain-preference">Domain preference</label>
+              <input type="text" id="adv-domain-preference" placeholder="e.g. must get a .com, .in is fine">
+            </div>
+            <div class="field" style="margin-bottom:0;">
+              <label for="adv-trademark-strategy">Trademark strategy</label>
+              <input type="text" id="adv-trademark-strategy" placeholder="e.g. filing in India only, global filing planned">
+            </div>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block mt-24" id="generate-btn">Generate 25 names</button>
+      </form>
+      </div>
+
+      <div class="card recent-generations-card" id="recent-generations-card" style="display:none;">
+        <h3>Recent Generations</h3>
+        <div class="recent-gen-list" id="recent-gen-list"></div>
+      </div>
+    </div>
+
+    <div id="results-area">
+      <div class="state-box">
+        <h3>Your shortlist will appear here</h3>
+        <p>Fill in the brief and generate — each name comes with meaning, a trademark risk read, and domain status across five TLDs.</p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<footer class="site-footer" id="site-footer"></footer>
+
+<script src="js/api.js"></script>
+<script src="js/nav.js"></script>
+<script src="js/generate.js"></script>
+</body>
+</html>

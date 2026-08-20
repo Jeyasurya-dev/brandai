@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Brand Workspace — Brandmark</title>
+<link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+<nav class="site-nav" id="site-nav"></nav>
+
+<div class="dash-shell">
+  <div class="container">
+    <div class="dash-header">
+      <div><h1>Brand Workspace</h1><p>Names you've saved, with logo, brand story, taglines, and notes alongside the real trademark/domain screening and AI Brand DNA already computed for each one.</p></div>
+    </div>
+    <div id="fav-area"><div class="state-box"><div class="spinner"></div></div></div>
+  </div>
+</div>
+
+<footer class="site-footer" id="site-footer"></footer>
+
+<script src="js/api.js"></script>
+<script src="js/nav.js"></script>
+<script>
+  requireAuth();
+  renderNav("favorites");
+  renderFooter();
+
+  function riskBadgeClass(status) {
+    if (status === "Low Risk") return "low";
+    if (status === "Medium Risk") return "medium";
+    if (status === "High Risk") return "high";
+    if (status === "Search Failed") return "failed";
+    return "review";
+  }
+  function domainBadgeClass(status) {
+    if (status === "available") return "domain-available";
+    if (status === "taken") return "domain-taken";
+    return "domain-unavailable";
+  }
+  function escapeHtml(str) {
+    const div = document.createElement("div");
+    div.textContent = str == null ? "" : String(str);
+    return div.innerHTML;
+  }
+
+  let favoritesData = [];
+
+  function renderBrandDna(intel) {
+    if (!intel) {
+      return `<p class="intel-rationale">Brand DNA not yet assessed — open "Intelligence" on this name from Generate to compute it.</p>`;
+    }
+    const dims = [
+      ["Memorability", intel.memorability], ["Pronunciation", intel.pronunciation],
+      ["Distinctiveness", intel.distinctiveness], ["Premium feel", intel.premium_feel],
+      ["Global usability", intel.global_usability], ["Domain potential", intel.domain_potential],
+    ];
+    return `<div class="intel-grid">${dims.map(([label, val]) => `
+      <div class="intel-score"><span class="intel-score-name">${label}</span><span class="intel-score-val">${Math.round(val || 0)}/100</span></div>
+    `).join("")}</div>`;
+  }
+
+  function renderCard(f) {
+    const n = f.name || {};
+    const domainTlds = ["com", "in", "ai", "io", "co"];
+    const domainBadges = domainTlds
+      .filter(t => n.domain_status && n.domain_status[t])
+      .map(t => `<span class="badge ${domainBadgeClass(n.domain_status[t])}">.${t} ${n.domain_status[t]}</span>`)
+      .join("");
+
+    return `
+      <div class="specimen" data-fav-id="${f.id}">
+        <div class="sp-name">${escapeHtml(n.name)}</div>
+        <p class="sp-meaning">${escapeHtml(n.meaning || "")}</p>
+        <div class="sp-badges">
+          <span class="badge ${riskBadgeClass(n.trademark_status)}">${escapeHtml(n.trademark_status || "Not Screened")}</span>
+          ${domainBadges}
+        </div>
+
+        <div class="intel-panel open" style="margin-top:14px;">
+          <p class="intel-label">Brand DNA</p>
+          ${renderBrandDna(n.brand_intelligence)}
+        </div>
+
+        <div class="intel-panel open">
+          <p class="intel-label">Logo</p>
+          ${f.selected_logo
+            ? `<div class="logo-thumb" style="max-width:140px;"><img src="${f.selected_logo}" alt="${escapeHtml(n.name)} logo"></div>`
+            : `<p class="intel-rationale">No logo saved yet — generate one from Generate → Logo, then "Save to workspace".</p>`}
+        </div>
+
+        ${f.brand_story ? `<div class="intel-panel open"><p class="intel-label">Brand story</p><p class="intel-rationale">${escapeHtml(f.brand_story)}</p></div>` : ""}
+        ${f.taglines && f.taglines.length ? `<div class="intel-panel open"><p class="intel-label">Taglines</p><p class="intel-rationale">${f.taglines.map(escapeHtml).join(" · ")}</p></div>` : ""}
+        ${f.notes ? `<div class="intel-panel open"><p class="intel-label">Notes</p><p class="intel-rationale">${escapeHtml(f.notes)}</p></div>` : ""}
+
+        <div class="sp-actions">
+          <button class="icon-btn edit-btn" data-fav="${f.id}">Edit workspace</button>
+          <button class="icon-btn export-btn" data-fav="${f.id}" data-name="${escapeHtml(n.name)}">Download Brand Kit</button>
+          <button class="icon-btn remove-btn" data-fav="${f.id}">Remove</button>
+        </div>
+        <div class="refine-panel" id="edit-panel-${f.id}"></div>
+      </div>`;
+  }
+
+  function openEditPanel(favId) {
+    const panel = document.getElementById(`edit-panel-${favId}`);
+    if (panel.classList.contains("open")) { panel.classList.remove("open"); return; }
+    panel.classList.add("open");
+    const f = favoritesData.find(x => x.id === favId);
+    panel.innerHTML = `
+      <div class="field">
+        <label for="edit-story-${favId}">Brand story</label>
+        <textarea id="edit-story-${favId}" rows="2" placeholder="The founding story or emotional hook">${escapeHtml(f.brand_story || "")}</textarea>
+      </div>
+      <div class="field">
+        <label for="edit-tagline-text-${favId}">Taglines</label>
+        <div class="chip-input" id="edit-tagline-chips-${favId}">
+          <input type="text" id="edit-tagline-text-${favId}" placeholder="Type and press Enter">
+        </div>
+        <button type="button" class="btn-link mt-24" id="suggest-taglines-${favId}">✨ Suggest taglines with AI</button>
+        <div id="tagline-suggestions-${favId}"></div>
+      </div>
+      <div class="field" style="margin-bottom:0;">
+        <label for="edit-notes-${favId}">Notes</label>
+        <textarea id="edit-notes-${favId}" rows="2" placeholder="Anything else worth remembering about this brand">${escapeHtml(f.notes || "")}</textarea>
+      </div>
+      <div class="brief-review-actions mt-24">
+        <button type="button" class="btn btn-primary btn-sm" id="save-workspace-${favId}">Save</button>
+        ${f.selected_logo ? `<button type="button" class="btn btn-ghost btn-sm" id="clear-logo-${favId}">Clear logo</button>` : ""}
+      </div>
+      <div class="form-msg" id="edit-msg-${favId}"></div>
+    `;
+
+    const chipWrap = document.getElementById(`edit-tagline-chips-${favId}`);
+    const chipInput = document.getElementById(`edit-tagline-text-${favId}`);
+    const taglineItems = [...(f.taglines || [])];
+    function renderChips() {
+      chipWrap.querySelectorAll(".chip").forEach(c => c.remove());
+      taglineItems.forEach((val, idx) => {
+        const chip = document.createElement("span");
+        chip.className = "chip";
+        chip.innerHTML = `${escapeHtml(val)} <button type="button" aria-label="Remove">&times;</button>`;
+        chip.querySelector("button").addEventListener("click", () => { taglineItems.splice(idx, 1); renderChips(); });
+        chipWrap.insertBefore(chip, chipInput);
+      });
+    }
+    renderChips();
+    chipInput.addEventListener("keydown", (e) => {
+      if ((e.key === "Enter" || e.key === ",") && chipInput.value.trim()) {
+        e.preventDefault();
+        taglineItems.push(chipInput.value.trim());
+        chipInput.value = "";
+        renderChips();
+      } else if (e.key === "Backspace" && !chipInput.value && taglineItems.length) {
+        taglineItems.pop();
+        renderChips();
+      }
+    });
+
+    document.getElementById(`suggest-taglines-${favId}`).addEventListener("click", async () => {
+      const suggestBtn = document.getElementById(`suggest-taglines-${favId}`);
+      const suggestionsEl = document.getElementById(`tagline-suggestions-${favId}`);
+      suggestBtn.disabled = true;
+      suggestionsEl.innerHTML = `<p class="intel-rationale">Drafting taglines…</p>`;
+      try {
+        const { taglines } = await Api.generateTaglines(favId);
+        suggestionsEl.innerHTML = `
+          <p class="intel-rationale">Click one to add it:</p>
+          <div class="refine-directions" id="tagline-pills-${favId}">
+            ${taglines.map(t => `<button type="button" class="refine-direction-btn" data-tagline="${escapeHtml(t)}">${escapeHtml(t)}</button>`).join("")}
+          </div>
+        `;
+        suggestionsEl.querySelectorAll("[data-tagline]").forEach(pill => {
+          pill.addEventListener("click", () => {
+            if (!taglineItems.includes(pill.dataset.tagline)) {
+              taglineItems.push(pill.dataset.tagline);
+              renderChips();
+            }
+            pill.disabled = true;
+            pill.classList.add("active");
+          });
+        });
+      } catch (e) {
+        suggestionsEl.innerHTML = `<p class="intel-rationale">${escapeHtml(e.message)}</p>`;
+      } finally {
+        suggestBtn.disabled = false;
+      }
+    });
+
+    document.getElementById(`save-workspace-${favId}`).addEventListener("click", async () => {
+      const msg = document.getElementById(`edit-msg-${favId}`);
+      try {
+        await Api.updateFavorite(favId, {
+          brand_story: document.getElementById(`edit-story-${favId}`).value.trim(),
+          taglines: taglineItems,
+          notes: document.getElementById(`edit-notes-${favId}`).value.trim(),
+        });
+        await load();
+      } catch (e) {
+        msg.textContent = e.message;
+        msg.classList.add("show", "error");
+      }
+    });
+
+    const clearBtn = document.getElementById(`clear-logo-${favId}`);
+    if (clearBtn) {
+      clearBtn.addEventListener("click", async () => {
+        try {
+          await Api.updateFavorite(favId, { selected_logo: null });
+          await load();
+        } catch (e) {
+          alert(e.message);
+        }
+      });
+    }
+  }
+
+  async function load() {
+    const area = document.getElementById("fav-area");
+    try {
+      const { favorites } = await Api.listFavorites();
+      favoritesData = favorites;
+      if (!favorites.length) {
+        area.innerHTML = `<div class="empty-state"><h3>No saved brands yet</h3><p>Save names from a generation to build out your Brand Workspace here.</p><a href="generate.html" class="btn btn-primary">Generate names</a></div>`;
+        return;
+      }
+      area.innerHTML = `<div class="results-grid">${favorites.map(renderCard).join("")}</div>`;
+
+      area.querySelectorAll(".remove-btn").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          btn.disabled = true;
+          try {
+            await Api.removeFavorite(btn.dataset.fav);
+            await load();
+          } catch (e) {
+            alert(e.message);
+            btn.disabled = false;
+          }
+        });
+      });
+
+      area.querySelectorAll(".edit-btn").forEach(btn => {
+        btn.addEventListener("click", () => openEditPanel(btn.dataset.fav));
+      });
+
+      area.querySelectorAll(".export-btn").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          btn.disabled = true;
+          const original = btn.textContent;
+          btn.textContent = "Preparing…";
+          try {
+            await Api.downloadBrandKit(btn.dataset.fav, btn.dataset.name);
+          } catch (e) {
+            alert(e.message);
+          } finally {
+            btn.disabled = false;
+            btn.textContent = original;
+          }
+        });
+      });
+    } catch (e) {
+      area.innerHTML = `<p style="color:var(--high);">${escapeHtml(e.message)}</p>`;
+    }
+  }
+  load();
+</script>
+</body>
+</html>

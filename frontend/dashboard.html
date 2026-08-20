@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — Brandmark</title>
+<link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+<nav class="site-nav" id="site-nav"></nav>
+
+<div class="dash-shell">
+  <div class="container">
+    <div class="dash-header">
+      <div>
+        <h1 id="greeting">Welcome back</h1>
+        <p>Here's a quick look at your naming activity.</p>
+      </div>
+      <a href="generate.html" class="btn btn-primary">New generation</a>
+    </div>
+
+    <div class="stat-grid" id="stat-grid">
+      <div class="stat-card"><div class="stat-num">—</div><div class="stat-label">Generations</div></div>
+      <div class="stat-card"><div class="stat-num">—</div><div class="stat-label">Names produced</div></div>
+      <div class="stat-card"><div class="stat-num">—</div><div class="stat-label">Favorites saved</div></div>
+      <div class="stat-card"><div class="stat-num">—</div><div class="stat-label">Current plan</div></div>
+    </div>
+
+    <div class="section-head" style="margin-bottom:20px;">
+      <h2 style="font-size:1.3rem;">Recent generations</h2>
+    </div>
+    <div class="table-wrap">
+      <table class="data-table" id="recent-table">
+        <thead><tr><th>Business</th><th>Style</th><th>Status</th><th>Names</th><th>When</th></tr></thead>
+        <tbody><tr><td colspan="5" style="color:var(--muted);">Loading…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<footer class="site-footer" id="site-footer"></footer>
+
+<script src="js/api.js"></script>
+<script src="js/nav.js"></script>
+<script>
+  requireAuth();
+  renderNav("dashboard");
+  renderFooter();
+
+  const user = Auth.getUser();
+  document.getElementById("greeting").textContent = `Welcome back, ${user?.full_name?.split(" ")[0] || "there"}`;
+
+  (async () => {
+    try {
+      const [{ generations }, { favorites }] = await Promise.all([Api.history(), Api.listFavorites()]);
+      const totalNames = generations.reduce((sum, g) => sum + (g.returned_count || 0), 0);
+      const cards = document.querySelectorAll("#stat-grid .stat-card");
+      cards[0].querySelector(".stat-num").textContent = generations.length;
+      cards[1].querySelector(".stat-num").textContent = totalNames;
+      cards[2].querySelector(".stat-num").textContent = favorites.length;
+      cards[3].querySelector(".stat-num").textContent = user?.role === "ADMIN" ? "Admin" : "Free";
+
+      const tbody = document.querySelector("#recent-table tbody");
+      if (!generations.length) {
+        tbody.innerHTML = `<tr><td colspan="5" style="color:var(--muted);">No generations yet — <a href="generate.html" style="color:var(--brass);">create your first one</a>.</td></tr>`;
+      } else {
+        tbody.innerHTML = generations.slice(0, 8).map(g => `
+          <tr>
+            <td>${g.business_description.slice(0, 60)}${g.business_description.length > 60 ? "…" : ""}</td>
+            <td>${(g.style_tags || []).join(", ") || "—"}</td>
+            <td><span class="pill-status ${g.status}">${g.status}</span></td>
+            <td>${g.returned_count}</td>
+            <td>${new Date(g.created_at).toLocaleDateString()}</td>
+          </tr>`).join("");
+      }
+    } catch (e) {
+      document.querySelector("#recent-table tbody").innerHTML = `<tr><td colspan="5" style="color:var(--high);">${e.message}</td></tr>`;
+    }
+  })();
+</script>
+</body>
+</html>

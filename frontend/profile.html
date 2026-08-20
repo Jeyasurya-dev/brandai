@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Profile — Brandmark</title>
+<link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+<nav class="site-nav" id="site-nav"></nav>
+
+<div class="auth-shell">
+  <div class="card auth-card" style="max-width:460px;">
+    <h1 style="font-size:1.5rem; margin:0 0 24px;">Profile</h1>
+    <div class="field"><label>Full name</label><input type="text" id="full_name" disabled></div>
+    <div class="field"><label>Email</label><input type="email" id="email" disabled></div>
+    <div class="field"><label>Role</label><input type="text" id="role" disabled></div>
+    <div class="field"><label>Member since</label><input type="text" id="created_at" disabled></div>
+    <button class="btn btn-ghost btn-block mt-24" id="billing-btn">Manage billing</button>
+    <div class="form-msg" id="billing-msg"></div>
+    <button class="btn btn-danger btn-block mt-24" id="logout-btn">Sign out</button>
+  </div>
+</div>
+
+<footer class="site-footer" id="site-footer"></footer>
+
+<script src="js/api.js"></script>
+<script src="js/nav.js"></script>
+<script>
+  requireAuth();
+  renderNav();
+  renderFooter();
+
+  const user = Auth.getUser();
+  document.getElementById("full_name").value = user?.full_name || "";
+  document.getElementById("email").value = user?.email || "";
+  document.getElementById("role").value = user?.role || "";
+  document.getElementById("created_at").value = user?.created_at ? new Date(user.created_at).toLocaleDateString() : "";
+
+  document.getElementById("logout-btn").addEventListener("click", async () => {
+    try { await Api.logout(); } catch (e) {}
+    Auth.clear();
+    window.location.href = "index.html";
+  });
+
+  document.getElementById("billing-btn").addEventListener("click", async () => {
+    const btn = document.getElementById("billing-btn");
+    const msg = document.getElementById("billing-msg");
+    msg.classList.remove("show", "error");
+    btn.disabled = true;
+    const original = btn.textContent;
+    btn.textContent = "Opening billing portal…";
+    try {
+      const { portal_url } = await Api.billingPortal();
+      window.location.href = "pricing.html";
+    } catch (e) {
+      msg.textContent = e.message;
+      msg.classList.add("show", "error");
+      btn.disabled = false;
+      btn.textContent = original;
+    }
+  });
+</script>
+</body>
+</html>
