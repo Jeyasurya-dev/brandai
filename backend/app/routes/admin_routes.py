@@ -133,6 +133,10 @@ def update_plan(plan_id):
 
     data = request.get_json(silent=True) or {}
 
+    # -----------------------------------------
+    # BASIC PLAN DETAILS
+    # -----------------------------------------
+
     if "name" in data:
         plan.name = data["name"]
 
@@ -148,28 +152,63 @@ def update_plan(plan_id):
             else None
         )
 
-    # Admin UI sends normal currency amount.
-    # Example: ₹499 -> 49900 paise.
+    # -----------------------------------------
+    # PRICE
+    #
+    # Frontend already converts normal currency
+    # to minor units.
+    #
+    # Example:
+    # ₹1   -> 100
+    # ₹10  -> 1000
+    # ₹100 -> 10000
+    #
+    # Therefore backend MUST NOT multiply by 100
+    # again.
+    # -----------------------------------------
+
     if "price_cents" in data:
         price = data["price_cents"]
 
         plan.price_cents = (
-            int(round(float(price) * 100))
+            int(price)
             if price not in (None, "")
             else None
         )
 
+    # -----------------------------------------
+    # CURRENCY
+    # -----------------------------------------
+
     if "currency" in data:
         plan.currency = data["currency"]
+
+    # -----------------------------------------
+    # BILLING PERIOD
+    # -----------------------------------------
 
     if "billing_period" in data:
         plan.billing_period = data["billing_period"]
 
+    # -----------------------------------------
+    # ACTIVE / INACTIVE
+    # -----------------------------------------
+
     if "is_active" in data:
-        plan.is_active = bool(data["is_active"])
+        plan.is_active = bool(
+            data["is_active"]
+        )
+
+    # -----------------------------------------
+    # FEATURES
+    # -----------------------------------------
 
     if "features" in data:
         plan.features = data["features"]
+
+    # -----------------------------------------
+    # AUDIT LOG
+    # -----------------------------------------
 
     _log(
         "update_plan",
@@ -178,6 +217,10 @@ def update_plan(plan_id):
             "changes": data,
         }
     )
+
+    # -----------------------------------------
+    # SAVE
+    # -----------------------------------------
 
     db.session.commit()
 
