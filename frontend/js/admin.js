@@ -802,29 +802,20 @@ if (savePlanBtn) {
 
 
         const payload = {
-
           code,
           name,
 
-          /* Backend expects cents */
-
-          price_cents:
-            Math.round(price * 100),
+  // Admin enters normal currency amount:
+  // ₹1   → 100 paise
+  // ₹100 → 10000 paise
+  // ₹499 → 49900 paise
+          price_cents: Math.round(price * 100),
 
           currency,
-
-          billing_period:
-            billingPeriod,
-
-          names_per_generation:
-            namesPerGeneration,
-
-          monthly_generation_limit:
-            monthlyLimit,
-
-          is_active:
-            isActive
-
+          billing_period: billingPeriod,
+          names_per_generation: namesPerGeneration,
+          monthly_generation_limit: monthlyLimit,
+          is_active: isActive
         };
 
 
