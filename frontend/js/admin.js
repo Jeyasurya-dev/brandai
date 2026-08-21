@@ -696,9 +696,7 @@ if (cancelPlanBtn) {
    ========================================================= */
 
 const savePlanBtn =
-  document.getElementById(
-    "save-plan-btn"
-  );
+  document.getElementById("save-plan-btn");
 
 
 if (savePlanBtn) {
@@ -707,46 +705,59 @@ if (savePlanBtn) {
     "click",
     async () => {
 
+      // IMPORTANT:
+      // Store this BEFORE closePlanForm() changes editingPlanId.
+      const isEditing = Boolean(editingPlanId);
+
       try {
 
+        /* -----------------------------------------
+           READ FORM VALUES
+           ----------------------------------------- */
+
         const code =
-          document.getElementById(
-            "plan-code"
-          ).value.trim();
+          document
+            .getElementById("plan-code")
+            .value
+            .trim();
 
         const name =
-          document.getElementById(
-            "plan-name"
-          ).value.trim();
+          document
+            .getElementById("plan-name")
+            .value
+            .trim();
+
+        const priceInput =
+          document
+            .getElementById("plan-price")
+            .value
+            .trim();
 
         const price =
-          Number(
-            document.getElementById(
-              "plan-price"
-            ).value
-          );
+          Number(priceInput);
 
         const currency =
-          document.getElementById(
-            "plan-currency"
-          ).value;
+          document
+            .getElementById("plan-currency")
+            .value;
 
         const billingPeriod =
-          document.getElementById(
-            "plan-billing-period"
-          ).value;
+          document
+            .getElementById("plan-billing-period")
+            .value;
 
         const namesPerGeneration =
           Number(
-            document.getElementById(
-              "plan-names-per-generation"
-            ).value
+            document
+              .getElementById("plan-names-per-generation")
+              .value
           );
 
         const monthlyLimitRaw =
-          document.getElementById(
-            "plan-monthly-limit"
-          ).value.trim();
+          document
+            .getElementById("plan-monthly-limit")
+            .value
+            .trim();
 
         const monthlyLimit =
           monthlyLimitRaw === ""
@@ -754,12 +765,14 @@ if (savePlanBtn) {
             : Number(monthlyLimitRaw);
 
         const isActive =
-          document.getElementById(
-            "plan-active"
-          ).value === "true";
+          document
+            .getElementById("plan-active")
+            .value === "true";
 
 
-        /* Validation */
+        /* -----------------------------------------
+           VALIDATION
+           ----------------------------------------- */
 
         if (!code) {
           throw new Error(
@@ -773,7 +786,11 @@ if (savePlanBtn) {
           );
         }
 
-        if (!Number.isFinite(price) || price < 0) {
+        if (
+          priceInput === "" ||
+          !Number.isFinite(price) ||
+          price < 0
+        ) {
           throw new Error(
             "Enter a valid price."
           );
@@ -801,17 +818,32 @@ if (savePlanBtn) {
         }
 
 
+        /* -----------------------------------------
+           PRICE CONVERSION
+           
+           Admin enters INR:
+           
+           ₹1    → 100 paise
+           ₹10   → 1000 paise
+           ₹100  → 10000 paise
+           
+           Database stores price_cents.
+           Razorpay uses the same minor-unit value.
+           ----------------------------------------- */
+
+        const priceInMinorUnit =
+          Math.round(price * 100);
+
+
+        /* -----------------------------------------
+           PAYLOAD
+           ----------------------------------------- */
+
         const payload = {
-          code,
-          name,
-
-  // Admin enters normal currency amount:
-  // ₹1   → 100 paise
-  // ₹100 → 10000 paise
-  // ₹499 → 49900 paise
-          price_cents: Math.round(price * 100),
-
-          currency,
+          code: code,
+          name: name,
+          price_cents: priceInMinorUnit,
+          currency: currency,
           billing_period: billingPeriod,
           names_per_generation: namesPerGeneration,
           monthly_generation_limit: monthlyLimit,
@@ -819,19 +851,66 @@ if (savePlanBtn) {
         };
 
 
+        /* -----------------------------------------
+           DEBUG
+           ----------------------------------------- */
+
+        console.log(
+          "========== PLAN UPDATE =========="
+        );
+
+        console.log(
+          "Editing Plan ID:",
+          editingPlanId
+        );
+
+        console.log(
+          "Price entered:",
+          price
+        );
+
+        console.log(
+          "Price sent to backend:",
+          priceInMinorUnit
+        );
+
+        console.log(
+          "Full payload:",
+          payload
+        );
+
+        console.log(
+          "=================================="
+        );
+
+
+        /* -----------------------------------------
+           BUTTON STATE
+           ----------------------------------------- */
+
         savePlanBtn.disabled = true;
 
         savePlanBtn.textContent =
-          editingPlanId
+          isEditing
             ? "Updating…"
             : "Saving…";
 
 
-        if (editingPlanId) {
+        /* -----------------------------------------
+           UPDATE EXISTING PLAN
+           ----------------------------------------- */
 
-          await Api.admin.updatePlan(
-            editingPlanId,
-            payload
+        if (isEditing) {
+
+          const response =
+            await Api.admin.updatePlan(
+              editingPlanId,
+              payload
+            );
+
+          console.log(
+            "UPDATE RESPONSE:",
+            response
           );
 
           showMessage(
@@ -840,10 +919,23 @@ if (savePlanBtn) {
             "success"
           );
 
-        } else {
+        }
 
-          await Api.admin.createPlan(
-            payload
+
+        /* -----------------------------------------
+           CREATE NEW PLAN
+           ----------------------------------------- */
+
+        else {
+
+          const response =
+            await Api.admin.createPlan(
+              payload
+            );
+
+          console.log(
+            "CREATE RESPONSE:",
+            response
           );
 
           showMessage(
@@ -855,29 +947,41 @@ if (savePlanBtn) {
         }
 
 
+        /* -----------------------------------------
+           CLOSE FORM
+           ----------------------------------------- */
+
         closePlanForm();
 
+
+        /* -----------------------------------------
+           REFRESH PLANS
+           ----------------------------------------- */
+
         await loadPlans();
+
 
       } catch (e) {
 
         console.error(
-          "Save plan error:",
+          "Save/update plan error:",
           e
         );
 
         showMessage(
           "plan-msg",
-          e.message || "Failed to save plan.",
+          e.message ||
+            "Failed to save plan.",
           "error"
         );
+
 
       } finally {
 
         savePlanBtn.disabled = false;
 
         savePlanBtn.textContent =
-          editingPlanId
+          isEditing
             ? "Update Plan"
             : "Save Plan";
 
@@ -887,7 +991,6 @@ if (savePlanBtn) {
   );
 
 }
-
 
 /* =========================================================
    EDIT PLAN BUTTONS
